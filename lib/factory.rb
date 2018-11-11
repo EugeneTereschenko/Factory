@@ -78,6 +78,9 @@ class Factory
         end
         res
       end
+      define_method :dig do |*args|
+        to_key_value.dig(*args)
+      end
       define_method :select do |&block|
         block ? values.select(&block) : enum_for(:select)
       end
