@@ -19,6 +19,15 @@
 
 class Factory
   def self.new(*args, &block)
+    if args[0].is_a? String
+      class_name = args.shift
+      const_set(class_name.capitalize, new_cl(*args, &block))
+    else
+      new_cl(*args, &block)
+    end
+  end
+
+  def self.new_cl(*args, &block)
     Class.new do
       args.each do |arg|
         attr_reader arg
