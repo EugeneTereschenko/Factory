@@ -18,46 +18,52 @@
 # - ==, eql?
 
 class Factory
-  def self.new(*args, &block)
+  class << self
+  def new(*args, &block)
     if args[0].is_a? String
       class_name = args.shift
-      const_set(class_name.capitalize, new_cl(*args, &block))
+      const_set(class_name.capitalize, new_class(*args, &block))
     else
-      new_cl(*args, &block)
+      new_class(*args, &block)
     end
   end
 
-  def self.new_cl(*args, &block)
+  def new_class(*args, &block)
     Class.new do
       args.each do |arg|
         attr_reader arg
       end
+
+      class_eval(&block) if block_given?
+
       define_method :initialize do |*val|
-        if args.length != val.length
-          raise ArgumentError.new
-        end
+        raise ArgumentError if args.length != val.length
+
         args.each_index do |i|
           instance_variable_set("@#{args[i]}", val[i])
         end
       end
-      define_method :length do
-        self.instance_variables.size
-      end
+
       define_method :size do
-        self.instance_variables.size
+        instance_variables.size
       end
+
       define_method :members do
-        instance_variables.map { |arg| arg.to_s.delete('@').to_sym}
+        instance_variables.map { |arg| arg.to_s.delete('@').to_sym }
       end
+
       define_method :values do
-        instance_variables.map { |var| instance_variable_get(var)}
+        instance_variables.map { |var| instance_variable_get(var) }
       end
+
       define_method :== do |obj|
-        self.class == obj.class && self.values == obj.values
+        self.class == obj.class && values == obj.values
       end
+
       define_method :eql? do |obj|
-        self.class == obj.class && self.values.eql?(obj.values)
+        self.class == obj.class && values.eql?(obj.values)
       end
+
       define_method :[] do |param_name|
         if (param_name.is_a? String) || (param_name.is_a? Symbol)
           instance_variable_get("@#{param_name}")
@@ -65,43 +71,46 @@ class Factory
           instance_variable_get(instance_variables[param_name])
         end
       end
+
       define_method :[]= do |field, value|
-        param = ("@" + (field.is_a?(Integer) ? args[field] : field).to_s)
-        instance_variables.map {instance_variable_set(param, value) }
+        param = ('@' + (field.is_a?(Integer) ? args[field] : field).to_s)
+        instance_variables.map { instance_variable_set(param, value) }
       end
+
       define_method :each do |&block|
-        block ? members.each { |attribute| block.call(send(attribute)) } : enum_for(:each)
+        to_a.each(&block) 
       end
+
+      def to_a
+        instance_variables.map { |values| instance_variable_get values }
+      end
+
       define_method :each_pair do |&block|
-        block ? to_key_value.each_pair(&block) : enum_for(:each)
+        to_h.each_pair &block
       end
-      define_method :to_key_value do
-        res = {}
-        hash = instance_variables.map { |var| hash = {var => instance_variable_get(var)}}
-        puts hash
-        hash.each do |val|
-          val.each do |key, value|
-            key = key.to_s.delete('@').to_sym
-            res[key] = value
-          end
-        end
-        res
+
+      define_method :to_h do
+        Hash[members.zip(to_a)]
       end
+
       define_method :dig do |*args|
-        to_key_value.dig(*args)
+        to_h.dig(*args)
       end
+
       define_method :select do |&block|
-        block ? values.select(&block) : enum_for(:select)
+        to_a.select(&block)
       end
-      define_method :values_at do |beg, fin|
-        result = values.values_at(beg, fin)
+
+      define_method :values_at do |index1, index2|
+        values.values_at(index1, index2)
       end
-      class_eval(&block) if block_given?
 
       define_method :to_a do
-        instance_variables.map { |var| instance_variable_get(var)}
+        instance_variables.map { |var| instance_variable_get(var) }
       end
 
+      alias_method :length, :size
     end
   end
+end
 end
