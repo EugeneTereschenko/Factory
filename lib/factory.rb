@@ -30,9 +30,7 @@ class Factory
 
   def new_class(*args, &block)
     Class.new do
-      args.each do |arg|
-        attr_reader arg
-      end
+      attr_reader *args
 
       class_eval(&block) if block_given?
 
@@ -65,7 +63,7 @@ class Factory
       end
 
       define_method :[] do |param_name|
-        if (param_name.is_a? String) || (param_name.is_a? Symbol)
+        if [String, Symbol].include? param_name.class
           instance_variable_get("@#{param_name}")
         elsif param_name.is_a? Integer
           instance_variable_get(instance_variables[param_name])
@@ -73,16 +71,11 @@ class Factory
       end
 
       define_method :[]= do |field, value|
-        param = ('@' + (field.is_a?(Integer) ? args[field] : field).to_s)
-        instance_variables.map { instance_variable_set(param, value) }
+        instance_variable_set("@#{field}", value)
       end
 
       define_method :each do |&block|
         to_a.each(&block) 
-      end
-
-      def to_a
-        instance_variables.map { |values| instance_variable_get values }
       end
 
       define_method :each_pair do |&block|
@@ -94,8 +87,12 @@ class Factory
       end
 
       define_method :dig do |*args|
-        to_h.dig(*args)
-      end
+        d = to_h
+          loop do
+            d = d[args.shift]
+            return d if d.nil? || args.empty?
+          end
+        end
 
       define_method :select do |&block|
         to_a.select(&block)
