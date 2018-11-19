@@ -102,11 +102,8 @@ class Factory
         values.values_at(index1, index2)
       end
 
-      define_method :to_a do
-        instance_variables.map { |var| instance_variable_get(var) }
-      end
-
       alias_method :length, :size
+      alias_method :to_a, :values
     end
   end
 end
