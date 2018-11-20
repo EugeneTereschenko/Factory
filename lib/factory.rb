@@ -29,7 +29,7 @@ class Factory
   end
 
   def new_class(*args, &block)
-    Class.new do
+    klass = Class.new do
       attr_reader *args
 
       class_eval(&block) if block_given?
@@ -55,11 +55,7 @@ class Factory
       end
 
       define_method :== do |obj|
-        self.class == obj.class && values == obj.values
-      end
-
-      define_method :eql? do |obj|
-        self.class == obj.class && values.eql?(obj.values)
+          obj.is_a?(klass) && values == obj.values
       end
 
       define_method :[] do |param_name|
@@ -79,7 +75,7 @@ class Factory
       end
 
       define_method :each_pair do |&block|
-        to_h.each_pair &block
+        to_h.each_pair(&block)
       end
 
       define_method :to_h do
@@ -104,6 +100,7 @@ class Factory
 
       alias_method :length, :size
       alias_method :to_a, :values
+      alias_method :eql?, :==
     end
   end
 end
