@@ -12,3 +12,6 @@ puts bmw.year
 puts kia["brand"]
 puts kia[2]
 puts kia.length
+puts kia.dig
+
+puts ([5, 10, 20]).reduce{0} { |sum, num| sum + num }

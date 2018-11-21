@@ -18,17 +18,16 @@
 # - ==, eql?
 
 class Factory
+
   class << self
+
   def new(*args, &block)
-    if args[0].is_a? String
-      class_name = args.shift
-      const_set(class_name.capitalize, new_class(*args, &block))
-    else
-      new_class(*args, &block)
-    end
+    return const_set(args.shift.capitalize, new_class(*args, &block)) if args.first.is_a? String
+    new_class(*args, &block)
   end
 
   def new_class(*args, &block)
+
     klass = Class.new do
       attr_reader *args
 
@@ -55,15 +54,12 @@ class Factory
       end
 
       define_method :== do |obj|
-          obj.is_a?(klass) && values == obj.values
+        obj.is_a?(klass) && values == obj.values
       end
 
       define_method :[] do |param_name|
-        if [String, Symbol].include? param_name.class
-          instance_variable_get("@#{param_name}")
-        elsif param_name.is_a? Integer
-          instance_variable_get(instance_variables[param_name])
-        end
+        return  instance_variable_get("@#{param_name}") if [String, Symbol].include? param_name.class
+        instance_variable_get(instance_variables[param_name]) if param_name.is_a? Integer
       end
 
       define_method :[]= do |field, value|
@@ -71,7 +67,7 @@ class Factory
       end
 
       define_method :each do |&block|
-        to_a.each(&block) 
+        to_a.each(&block)
       end
 
       define_method :each_pair do |&block|
@@ -83,12 +79,14 @@ class Factory
       end
 
       define_method :dig do |*args|
-        d = to_h
-          loop do
-            d = d[args.shift]
-            return d if d.nil? || args.empty?
-          end
+        args.reduce(to_h) do |memo, key|
+          if (memo[key].nil?)
+            return nil
+         else
+           memo[key]
+         end
         end
+      end
 
       define_method :select do |&block|
         to_a.select(&block)
