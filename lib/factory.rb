@@ -1,33 +1,14 @@
 # frozen_string_literal: true
 
-# * Here you must define your `Factory` class.
-# * Each instance of Factory could be stored into variable. The name of this variable is the name of created Class
-# * Arguments of creatable Factory instance are fields/attributes of created class
-# * The ability to add some methods to this class must be provided while creating a Factory
-# * We must have an ability to get/set the value of attribute like [0], ['attribute_name'], [:attribute_name]
-#
-# * Instance of creatable Factory class should correctly respond to main methods of Struct
-# - each
-# - each_pair
-# - dig
-# - size/length
-# - members
-# - select
-# - to_a
-# - values_at
-# - ==, eql?
-
 class Factory
-
   class << self
-
   def new(*args, &block)
     return const_set(args.shift.capitalize, new_class(*args, &block)) if args.first.is_a? String
+    
     new_class(*args, &block)
   end
 
   def new_class(*args, &block)
-
     klass = Class.new do
       attr_reader *args
 
@@ -80,11 +61,9 @@ class Factory
 
       define_method :dig do |*args|
         args.reduce(to_h) do |memo, key|
-          if (memo[key].nil?)
-            return nil
-         else
-           memo[key]
-         end
+          return unless memo[key]
+
+          memo[key]
         end
       end
 
