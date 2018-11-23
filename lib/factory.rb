@@ -4,13 +4,13 @@ class Factory
   class << self
   def new(*args, &block)
     return const_set(args.shift.capitalize, new_class(*args, &block)) if args.first.is_a? String
-    
+
     new_class(*args, &block)
   end
 
   def new_class(*args, &block)
     klass = Class.new do
-      attr_reader *args
+      attr_reader(*args)
 
       class_eval(&block) if block_given?
 
@@ -39,7 +39,8 @@ class Factory
       end
 
       define_method :[] do |param_name|
-        return  instance_variable_get("@#{param_name}") if [String, Symbol].include? param_name.class
+        return instance_variable_get("@#{param_name}") if [String, Symbol].include? param_name.class
+
         instance_variable_get(instance_variables[param_name]) if param_name.is_a? Integer
       end
 
@@ -47,28 +48,28 @@ class Factory
         instance_variable_set("@#{field}", value)
       end
 
-      define_method :each do |&block|
-        to_a.each(&block)
+      define_method :each do |&code|
+        to_a.each(&code)
       end
 
-      define_method :each_pair do |&block|
-        to_h.each_pair(&block)
+      define_method :each_pair do |&code|
+        to_h.each_pair(&code)
       end
 
       define_method :to_h do
         Hash[members.zip(to_a)]
       end
 
-      define_method :dig do |*args|
-        args.reduce(to_h) do |memo, key|
-          return unless memo[key]
+      define_method :dig do |*keys|
+        keys.reduce(to_h) do |memo, key|
+          break unless memo[key]
 
           memo[key]
         end
       end
 
-      define_method :select do |&block|
-        to_a.select(&block)
+      define_method :select do |&code|
+        to_a.select(&code)
       end
 
       define_method :values_at do |index1, index2|
